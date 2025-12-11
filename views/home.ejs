@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Notícias</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+                <h1>Portal de Notícias</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/" class="active"><i class="fas fa-home"></i> Início</a></li>
+                <li><a href="#todas"><i class="fas fa-list"></i> Todas Notícias</a></li>
+                <li><a href="#cadastrar"><i class="fas fa-plus"></i> Nova Notícia</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero fade-in">
+            <h2 class="hero-title">Últimas Notícias</h2>
+            <p class="hero-subtitle">Fique por dentro das novidades em tempo real</p>
+            
+            <div class="filter-container">
+                <span class="filter-label"><i class="fas fa-filter"></i> Filtrar por tipo:</span>
+                <select class="filter-select" id="filterType">
+                    <option value="todas">Todas as Notícias</option>
+                    <option value="politica">Política</option>
+                    <option value="esportes">Esportes</option>
+                    <option value="entretenimento">Entretenimento</option>
+                    <option value="tecnologia">Tecnologia</option>
+                </select>
+            </div>
+
+            <button class="btn btn-add" onclick="showAddForm()">
+                <i class="fas fa-plus-circle"></i> Cadastrar Nova Notícia
+            </button>
+        </section>
+
+        <div id="loading" class="spinner" style="display: none;"></div>
+
+        <section id="newsSection" class="news-grid">
+            <!-- Notícias serão carregadas dinamicamente aqui -->
+            <div class="news-card fade-in">
+                <div class="news-header">
+                    <span class="news-type">Carregando...</span>
+                    <h3 class="news-title">Aguarde um momento</h3>
+                </div>
+                <div class="news-content">
+                    <p>As notícias estão sendo carregadas...</p>
+                </div>
+                <div class="news-footer">
+                    <span class="news-date"><i class="far fa-clock"></i> Carregando...</span>
+                    <div class="news-actions">
+                        <button class="btn btn-edit" disabled><i class="fas fa-edit"></i> Editar</button>
+                        <button class="btn btn-delete" disabled><i class="fas fa-trash"></i> Excluir</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal para Cadastro/Edição -->
+        <div id="newsModal" class="modal" style="display: none;">
+            <div class="modal-content form-container">
+                <h2 class="form-title" id="modalTitle">Cadastrar Nova Notícia</h2>
+                <form id="newsForm">
+                    <input type="hidden" id="newsId" name="_id">
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="titulonoticia">
+                            <i class="fas fa-heading"></i> Título da Notícia
+                        </label>
+                        <input type="text" class="form-input" id="titulonoticia" name="titulonoticia" 
+                               placeholder="Digite o título da notícia" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="conteudonoticia">
+                            <i class="fas fa-align-left"></i> Conteúdo
+                        </label>
+                        <textarea class="form-textarea" id="conteudonoticia" name="conteudonoticia" 
+                                  placeholder="Digite o conteúdo da notícia" rows="6" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="tiponoticia">
+                            <i class="fas fa-tag"></i> Tipo de Notícia
+                        </label>
+                        <select class="form-select" id="tiponoticia" name="tiponoticia" required>
+                            <option value="">Selecione um tipo</option>
+                            <option value="politica">Política</option>
+                            <option value="esportes">Esportes</option>
+                            <option value="entretenimento">Entretenimento</option>
+                            <option value="tecnologia">Tecnologia</option>
+                            <option value="economia">Economia</option>
+                            <option value="saude">Saúde</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="datahoracadastro">
+                            <i class="far fa-calendar-alt"></i> Data e Hora
+                        </label>
+                        <input type="text" class="form-input" id="datahoracadastro" 
+                               name="datahoracadastro" readonly>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button type="submit" class="form-submit">
+                            <i class="fas fa-save"></i> Salvar Notícia
+                        </button>
+                        <button type="button" class="btn btn-cancel" onclick="hideModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-text">
+                <i class="fas fa-copyright"></i> 2024 Portal de Notícias - Todos os direitos reservados
+            </p>
+            <p class="footer-text">
+                Desenvolvido com <i class="fas fa-heart" style="color: #ff6b6b;"></i> para a comunidade
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript para manipulação das notícias
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarNoticias();
+            document.getElementById('filterType').addEventListener('change', filtrarNoticias);
+        });
+
+        async function carregarNoticias() {
+            const loading = document.getElementById('loading');
+            const newsSection = document.getElementById('newsSection');
+            
+            loading.style.display = 'block';
+            newsSection.innerHTML = '';
+            
+            try {
+                const response = await fetch('/noticias');
+                const noticias = await response.json();
+                
+                if (noticias.length === 0) {
+                    newsSection.innerHTML = `
+                        <div class="message message-info" style="grid-column: 1 / -1;">
+                            <i class="fas fa-info-circle"></i> Nenhuma notícia cadastrada ainda.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                noticias.forEach(noticia => {
+                    const card = criarCardNoticia(noticia);
+                    newsSection.appendChild(card);
+                });
+                
+            } catch (error) {
+                newsSection.innerHTML = `
+                    <div class="message message-error" style="grid-column: 1 / -1;">
+                        <i class="fas fa-exclamation-triangle"></i> Erro ao carregar notícias: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function criarCardNoticia(noticia) {
+            const card = document.createElement('div');
+            card.className = 'news-card fade-in';
+            card.id = `noticia-${noticia._id}`;
+            
+            const tipoFormatado = formatarTipoNoticia(noticia.tiponoticia);
+            
+            card.innerHTML = `
+                <div class="news-header">
+                    <span class="news-type" style="background: ${getTipoColor(noticia.tiponoticia)}">
+                        ${tipoFormatado}
+                    </span>
+                    <h3 class="news-title">${noticia.titulonoticia}</h3>
+                </div>
+                <div class="news-content">
+                    <p>${noticia.conteudonoticia.substring(0, 200)}${noticia.conteudonoticia.length > 200 ? '...' : ''}</p>
+                </div>
+                <div class="news-footer">
+                    <span class="news-date">
+                        <i class="far fa-clock"></i> ${noticia.datahoracadastro || 'Data não disponível'}
+                    </span>
+                    <div class="news-actions">
+                        <button class="btn btn-edit" onclick="editarNoticia('${noticia._id}')">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-delete" onclick="excluirNoticia('${noticia._id}')">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function filtrarNoticias() {
+            const tipo = document.getElementById('filterType').value;
+            const loading = document.getElementById('loading');
+            const newsSection = document.getElementById('newsSection');
+            
+            loading.style.display = 'block';
+            newsSection.innerHTML = '';
+            
+            try {
+                let url = '/noticias';
+                if (tipo !== 'todas') {
+                    url = `/noticias/tiponoticia/${tipo}`;
+                }
+                
+                const response = await fetch(url);
+                const noticias = await response.json();
+                
+                if (noticias.length === 0) {
+                    newsSection.innerHTML = `
+                        <div class="message message-info" style="grid-column: 1 / -1;">
+                            <i class="fas fa-info-circle"></i> Nenhuma notícia encontrada para o filtro selecionado.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                noticias.forEach(noticia => {
+                    const card = criarCardNoticia(noticia);
+                    newsSection.appendChild(card);
+                });
+                
+            } catch (error) {
+                newsSection.innerHTML = `
+                    <div class="message message-error" style="grid-column: 1 / -1;">
+                        <i class="fas fa-exclamation-triangle"></i> Erro ao filtrar notícias: ${error.message}
+                    </div>
+                `;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        function showAddForm() {
+            document.getElementById('modalTitle').textContent = 'Cadastrar Nova Notícia';
+            document.getElementById('newsForm').reset();
+            document.getElementById('newsId').value = '';
+            document.getElementById('datahoracadastro').value = new Date().toLocaleString('pt-BR');
+            document.getElementById('newsModal').style.display = 'block';
+        }
+
+        async function editarNoticia(id) {
+            try {
+                const response = await fetch(`/noticias/id/${id}`);
+                const noticias = await response.json();
+                
+                if (noticias.length > 0) {
+                    const noticia = noticias[0];
+                    
+                    document.getElementById('modalTitle').textContent = 'Editar Notícia';
+                    document.getElementById('newsId').value = noticia._id;
+                    document.getElementById('titulonoticia').value = noticia.titulonoticia;
+                    document.getElementById('conteudonoticia').value = noticia.conteudonoticia;
+                    document.getElementById('tiponoticia').value = noticia.tiponoticia;
+                    document.getElementById('datahoracadastro').value = noticia.datahoracadastro;
+                    
+                    document.getElementById('newsModal').style.display = 'block';
+                }
+            } catch (error) {
+                mostrarMensagem(`Erro ao carregar notícia: ${error.message}`, 'error');
+            }
+        }
+
+        async function excluirNoticia(id) {
+            if (confirm('Tem certeza que deseja excluir esta notícia?')) {
+                try {
+                    const response = await fetch('/delnoticas', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ _id: id })
+                    });
+                    
+                    if (response.ok) {
+                        document.getElementById(`noticia-${id}`).remove();
+                        mostrarMensagem('Notícia excluída com sucesso!', 'success');
+                    } else {
+                        throw new Error('Erro ao excluir notícia');
+                    }
+                } catch (error) {
+                    mostrarMensagem(`Erro ao excluir notícia: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        document.getElementById('newsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                titulonoticia: document.getElementById('titulonoticia').value,
+                conteudonoticia: document.getElementById('conteudonoticia').value,
+                tiponoticia: document.getElementById('tiponoticia').value
+            };
+            
+            const id = document.getElementById('newsId').value;
+            let url = '/postnoticias';
+            let method = 'POST';
+            
+            if (id) {
+                formData._id = id;
+                url = '/putnoticias';
+                method = 'PUT';
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    mostrarMensagem(
+                        id ? 'Notícia atualizada com sucesso!' : 'Notícia cadastrada com sucesso!',
+                        'success'
+                    );
+                    hideModal();
+                    carregarNoticias();
+                } else {
+                    throw new Error('Erro ao salvar notícia');
+                }
+            } catch (error) {
+                mostrarMensagem(`Erro ao salvar notícia: ${error.message}`, 'error');
+            }
+        });
+
+        function hideModal() {
+            document.getElementById('newsModal').style.display = 'none';
+        }
+
+        function mostrarMensagem(texto, tipo) {
+            const mensagem = document.createElement('div');
+            mensagem.className = `message message-${tipo}`;
+            mensagem.innerHTML = `
+                <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${texto}
+            `;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(mensagem, container.firstChild);
+            
+            setTimeout(() => {
+                mensagem.remove();
+            }, 5000);
+        }
+
+        function formatarTipoNoticia(tipo) {
+            const tipos = {
+                'politica': 'Política',
+                'esportes': 'Esportes',
+                'entretenimento': 'Entretenimento',
+                'tecnologia': 'Tecnologia',
+                'economia': 'Economia',
+                'saude': 'Saúde'
+            };
+            return tipos[tipo] || tipo;
+        }
+
+        function getTipoColor(tipo) {
+            const colors = {
+                'politica': 'linear-gradient(45deg, #6a11cb, #8a2be2)',
+                'esportes': 'linear-gradient(45deg, #00b894, #00cec9)',
+                'entretenimento': 'linear-gradient(45deg, #ffd166, #ffed4e)',
+                'tecnologia': 'linear-gradient(45deg, #118ab2, #06d6a0)',
+                'economia': 'linear-gradient(45deg, #ff9e00, #ffaa33)',
+                'saude': 'linear-gradient(45deg, #ef476f, #ff6b6b)'
+            };
+            return colors[tipo] || 'linear-gradient(45deg, #6a11cb, #00b894)';
+        }
+
+        // Fecha o modal ao clicar fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('newsModal');
+            if (event.target === modal) {
+                hideModal();
+            }
+        }
+    </script>
+</body>
+</html>

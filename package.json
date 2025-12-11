@@ -1,0 +1,30 @@
+{
+  "name": "portal-noticias",
+  "version": "1.0.0",
+  "description": "Portal de Notícias com Express e MongoDB",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "mongodb": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^20.11.17",
+    "nodemon": "^3.0.3"
+  },
+  "keywords": [
+    "noticias",
+    "portal",
+    "express",
+    "mongodb"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT"
+}
